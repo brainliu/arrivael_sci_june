@@ -33,9 +33,20 @@ class LstmLayer(object):
 
     def init_state_vec(self):
         '''
-        初始化保存状态的向量
+        初始化保存状态的向量嗯
         '''
         state_vec_list = []
         state_vec_list.append(np.zeros(
             (self.state_with, 1)))
         return state_vec_list
+
+    def init_weight_mat(self):
+        '''
+        初始化权重矩阵
+        '''
+        Wh = np.random.uniform(-1e-4, 1e-4,
+                               (self.state_with, self.state_with))
+        Wx = np.random.uniform(-1e-4, 1e-4,
+                               (self.state_with, self.input_with))
+        b = np.zeros((self.state_with, 1))
+        return Wh, Wx, b
