@@ -26,3 +26,16 @@ class LstmLayer(object):
         #输出的激活函数
         self.output_activator=Tanhactivator()
 
+        #当前时刻初始化为t0
+        self.times=0
+        #各个时刻单元状态向量C
+        self.c_list=self.init_state_vec()
+
+    def init_state_vec(self):
+        '''
+        初始化保存状态的向量
+        '''
+        state_vec_list = []
+        state_vec_list.append(np.zeros(
+            (self.state_with, 1)))
+        return state_vec_list
