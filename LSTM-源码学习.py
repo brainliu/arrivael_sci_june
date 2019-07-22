@@ -30,6 +30,13 @@ class LstmLayer(object):
         self.times=0
         #各个时刻单元状态向量C
         self.c_list=self.init_state_vec()
+        #各时刻的输出向量h
+        self.h_list=self.init_state_vec()
+        #各时刻的遗忘门f
+        self.f_list=self.init_state_vec()
+        #各时刻的输入们i
+        self.i_list=self.init_state_vec()
+        
 
     def init_state_vec(self):
         '''
