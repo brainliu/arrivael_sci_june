@@ -108,3 +108,77 @@ class LstmLayer(object):
         net=np.dot(wh,h)+np.dot(wx,x)+b
         gate=activator.forward(net)
         return gate
+    #反向传播法的实现
+    def backwward(self,x,delta_h,activator):
+        self.calc_delta(delta_h,activator)
+        self.calc_gradient(x)
+    #算法分为两个部分，一部分是计算误差项
+    def calc_delta(self,delta_h,activator):
+        #初始化各个时刻的误差项
+        self.delta_h_list=self.init_delta()#输出误差项
+        self.delta_o_list=self.init_delta()#输出门误差项
+        self.delta_i_list=self.init_delta()#输入门误差项
+        self.delta_f_list=self.init_delta()#遗忘门误差项
+        self.delta_Ct_list=self.init_delta()#即时输出误差项
+        #保存从上一层传递下来的当前时刻的误差项
+        self.delta_h_list[-1]=delta_h
+        #迭代计算每个时刻的误差
+        for k in range(self.times,0,-1):
+            self.calc_delta_k(k)
+
+    #初始化误差项
+    def init_delta(self):
+        delta_list=[]
+        for i in range(self.times+1):
+            delta_list.append(np.zeros((
+                self.state_with,1)))
+        return delta_list
+    def calc_delta_k(self,k):
+        """
+        根据K时刻的delta_h,计算K时刻的delta_f
+        delta_i,delta_o,delta_Ct,以及K-1时刻的delta_h
+        """
+        #获得K时刻的前向计算的值
+        ig=self.i_list[k]
+        og=self.o_list[k]
+        fg=self.f_list[k]
+        ct=self.ct_list[k]
+        c=self.c_list[k]
+        tanh_c=self.output_activator.forward(c)
+        delta_k=self.delta_h_list[k]
+        #根据式9计算delta_o
+        delta_o=(delta_k*tanh_c*self.gate_activator.backward(og))
+
+        delta_f=(delta_k*og*(1-tanh_c*tanh_c)*ct*self.gate_activator.backward(ig))
+
+        delta_i=(delta_k*og*(1-tanh_c*tanh_c)*ct*self.gate_activator.backward(ig))
+
+        delta_ct=(delta_k*og*(1-tanh_c*tanh_c)*ig*self.output_activator.backward(ct))
+
+        delta_h_prev=(
+            np.dot(delta_o.transpose(),self.woh)+
+            np.dot(delta_i.transpose(),self.wih)+
+            np.dot(delta_f.transpose(),self.wfh)+
+            np.dot(delta_ct.transpose(),self.wch)
+        ).transpose()
+
+        #保存全部delta的值
+        self.delta_h_list[k-1]=delta_h_prev
+        self.delta_f_list[k]=delta_f
+        self.delta_i_list[k]=delta_i
+        self.delta_o_list[k]=delta_o
+        self.delta_Ct_list[k]=delta_ct
+    #另一部分是计算梯度
+    def calc_gradient(self,x):
+        #初始化遗忘门权重梯度矩阵和偏置项
+        self.wfh_grad,self.wfx_grad,self.bf_grad=(self.init_weight_gradient_mat())
+
+
+    def init_weight_gradient_mat(self):
+        #初始化权重矩阵
+        wh_grad=np.zeros((self.state_with,self.state_with))
+        wx_grad=np.zeros((  self.state_with,self.input_with))
+        b_grad=np.zeros((self.state_with,1))
+        return wh_grad,wx_grad,b_grad
+
+
