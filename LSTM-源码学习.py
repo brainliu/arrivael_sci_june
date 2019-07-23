@@ -172,6 +172,8 @@ class LstmLayer(object):
     def calc_gradient(self,x):
         #初始化遗忘门权重梯度矩阵和偏置项
         self.wfh_grad,self.wfx_grad,self.bf_grad=(self.init_weight_gradient_mat())
+        #初始化输入们权重梯度矩阵和偏置向量
+        self.wih_grad,self.wix_grad,self,bi_grad=(self.init_weight_gradient_mat())
 
 
     def init_weight_gradient_mat(self):
@@ -180,5 +182,16 @@ class LstmLayer(object):
         wx_grad=np.zeros((  self.state_with,self.input_with))
         b_grad=np.zeros((self.state_with,1))
         return wh_grad,wx_grad,b_grad
-
+    def calc_gradient_t(self,t):
+        #计算每时刻t权重的梯度
+        h_prew=self.h_list[t-1].transpose()
+        wfh_grad=np.dot(self.delta_f_list[t],h_prew)
+        bf_grad=self.delta_f_list[t]
+        wih_grad=np.dot(self.delta_i_list[t],h_prew)
+        bi_grad=self.delta_f_list[t]
+        Woh_grad=np.dot(self.delta_o_list[t],h_prew)
+        bo_grad=self.delta_f_list[t]
+        wch_grad=np.dot(self.delta_Ct_list[t],h_prew)
+        bc_grad=self.delta_Ct_list[t]
+        return wfh_grad,bf_grad,wih_grad,bi_grad,Woh_grad,bo_grad,wch_grad,bc_grad
 
