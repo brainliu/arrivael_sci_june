@@ -4,6 +4,17 @@
 # file: LSTM-源码学习.py
 #location: china chengdu 610000
 import numpy as np
+class IdentityActivator(object):
+    def forward(self,weighted_input):
+        return weighted_input
+    def backward(self,output):
+        return 1
+class RuleActivator(object):
+    def forward(self,weighted_input):
+        return max(0,weighted_input)
+    def backwward(self,output):
+        return 1 if output>0 else 0
+
 
 class  SigmoidActivator(object):
     def forward(self,weighted_input):
@@ -49,7 +60,7 @@ class LstmLayer(object):
         self.woh,self.wox,self.bo=(self.init_weight_mat())
 
         #单元状态权重矩阵wch,wcx偏置项bc
-        self.wch,self.wcx,self.wbc=(self.init_weight_mat())
+        self.wch,self.wcx,self.bc=(self.init_weight_mat())
 
     def init_state_vec(self):
         '''
@@ -82,8 +93,10 @@ class LstmLayer(object):
         self.times+=1
         #遗忘门
         fg=self.calc_gate(x,self.wfx,self.wfh,self.bf,self.gate_activator)
+        self.f_list.append(fg)
         #输入门
         ig=self.calc_gate(x,self.wix,self.wih,self.bi,self.gate_activator)
+        self.i_list.append(ig)
         #输出门
         og=self.calc_gate(x,self.wox,self.woh,self.bo,self.gate_activator)
 
@@ -173,7 +186,12 @@ class LstmLayer(object):
         #初始化遗忘门权重梯度矩阵和偏置项
         self.wfh_grad,self.wfx_grad,self.bf_grad=(self.init_weight_gradient_mat())
         #初始化输入们权重梯度矩阵和偏置向量
-        self.wih_grad,self.wix_grad,self,bi_grad=(self.init_weight_gradient_mat())
+        self.wih_grad,self.wix_grad,self.bi_grad=(self.init_weight_gradient_mat())
+        #初始化输出门权梯度矩阵和偏置向量
+        self.woh_grad,self.wox_grad,self.bo_grad=(self.init_weight_gradient_mat())
+        #初始化单元状态太权重梯度矩阵和偏置向量
+        self.wch_grad,self.wcx_grad,self.bc_grad=(self.init_weight_gradient_mat())
+        #计算对上一次输出h的权重梯度
 
 
     def init_weight_gradient_mat(self):
@@ -194,4 +212,71 @@ class LstmLayer(object):
         wch_grad=np.dot(self.delta_Ct_list[t],h_prew)
         bc_grad=self.delta_Ct_list[t]
         return wfh_grad,bf_grad,wih_grad,bi_grad,Woh_grad,bo_grad,wch_grad,bc_grad
+    #梯度下降算法实现,更新权重
+    def update(self):
+        self.wfh=self.learning_rate*self.wch_grad
+        self.wfx=self.learning_rate*self.wfh_grad
+        self.bf=self.learning_rate*self.bf_grad
+        self.wih=self.learning_rate*self.wih_grad
+        self.bi=self.learning_rate*self.bi_grad
+        self.woh=self.learning_rate*self.woh_grad
+        self.wox=self.learning_rate*self.wox_grad
+        self.bo=self.learning_rate*self.bo_grad
+        self.wch=self.learning_rate*self.wch_grad
+        self.wcx=self.learning_rate*self.wcx_grad
+    def reset_state(self):
+        #当前时刻初始化为0
+        self.times=0
+        #各个时刻单元状态向量C
+        self.c_list=self.init_state_vec()
+        self.h_list=self.init_state_vec()
+        self.f_list=self.init_state_vec()
+        self.i_list=self.init_state_vec()
+        self.o_list=self.init_state_vec()
+        self.ct_list=self.init_state_vec()
+#最后是梯度检查的代码
+def data_Set():
+    x = [np.array([[1], [2], [3]]),
+         np.array([[2], [3], [4]])]
+    d = np.array([[1], [2]])
+    return x,d
+def gradient_check():
+    error_function=lambda o:o.sum()
+    lstm=LstmLayer(3,2,1e-3)
+    #计算forward值
+    x,d=data_Set()
+    lstm.forward(x[0])
+    lstm.forward(x[1])
+    #求取senstivity map
+    sensitivity_Array=np.ones(lstm.h_list[-1].shape,dtype=np.float64)
+    #计算梯度
+    lstm.backwward(x[1],sensitivity_Array,IdentityActivator())
+    #检查梯度
+    epsilon=10e-4
+    for i in range(lstm.wfh.shape[0]):
+        for j in range(lstm.wfh.shape[1]):
+            lstm.wfh[i,j]+=epsilon
+            lstm.reset_state()
+            lstm.forward(x[0])
+            lstm.forward(x[1])
+            err1=error_function(lstm.h_list[-1])
+            lstm.wfh[i,j]-=2*epsilon
+            lstm.reset_state()
+            lstm.forward(x[0])
+            lstm.forward(x[1])
+            err2=error_function(lstm.h_list[-1])
+            expect_grad=(err1-err2)/(2*epsilon)
+            lstm.wfh[i,j]+=epsilon
+            print('weights(%d,%d): expected - actural %.4e - %.4e' % (i, j, expect_grad, lstm.wfh_grad[i, j]))
+    return lstm
+
+def test():
+    l = LstmLayer(3, 2, 1e-3)
+    x, d = data_Set()
+    l.forward(x[0])
+    l.forward(x[1])
+    l.backwward(x[1], d, IdentityActivator())
+    return l
+
+gradient_check()
 
