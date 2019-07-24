@@ -101,7 +101,7 @@ class LstmLayer(object):
         h=og*self.output_activator.forward(c)
         self.h_list.append(h)
 
-          
+
     def calc_gate(self,x,wx,wh,b,activator):
         """计算门"""
         h=self.h_list[self.times-1]#上次lstm的输出
