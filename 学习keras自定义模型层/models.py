@@ -98,6 +98,7 @@ class models:
         #feature concatenate
         nbhd_vec = Concatenate(axis=-1)(nbhd_vecs)
         nbhd_vec = Reshape(target_shape = (lstm_seq_len, cnn_flat_size))(nbhd_vec)
+        ###吸引力模型的一个输入.................
         lstm_input = Concatenate(axis=-1)([lstm_inputs, nbhd_vec])
 
         #lstm
@@ -134,19 +135,27 @@ class models:
         att_nbhd_vec = [Reshape(target_shape = (att_lstm_seq_len, cnn_flat_size))(att_nbhd_vec[att]) for att in range(att_lstm_num)]
         att_lstm_input = [Concatenate(axis=-1)([att_lstm_inputs[att], att_nbhd_vec[att]]) for att in range(att_lstm_num)]
 
+
+        ####对过去的每一天进行了一个lstm
         att_lstms = [LSTM(units=lstm_out_size, return_sequences=True, dropout=0.1, recurrent_dropout=0.1, name="att_lstm_{0}".format(att + 1))(att_lstm_input[att]) for att in range(att_lstm_num)]
 
         #用的attention中compare这一个方法
         #attention 模型的输入为 attlsems[0] ,lstm
         #compare
         att_low_level=[attention.Attention(method='cba')([att_lstms[att], lstm]) for att in range(att_lstm_num)]
+        ##计算得到low_level 也就是每一个memory与要查询的单元的吸引力的结果，对应的是一个预测值
+
         att_low_level=Concatenate(axis=-1)(att_low_level)
+        ##然后再把这些值连接在一起，维度得到了增加
         att_low_level=Reshape(target_shape=(att_lstm_num, lstm_out_size))(att_low_level)
 
-
+        ######最后再进行了一次lstm，相当于把7填的汇总到一起，进行了一个大的lstm
         att_high_level = LSTM(units=lstm_out_size, return_sequences=False, dropout=0.1, recurrent_dropout=0.1)(att_low_level)
 
+
+        ##相当于有8个lstm？？，8个一起求权重
         lstm_all = Concatenate(axis=-1)([att_high_level, lstm])
+        ###
         # lstm_all = Dropout(rate = .3)(lstm_all)
         lstm_all = Dense(units = output_shape)(lstm_all)
         pred_volume = Activation('tanh')(lstm_all)

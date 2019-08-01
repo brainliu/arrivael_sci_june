@@ -36,13 +36,21 @@ class Attention(Layer):
         :param mask: the masking entry will be directly discarded
         :return: a tensor of size BxD1, weighted summing along the sequence dimension
         '''
+        ##模型中对应的记忆单元为过去7天的
+        ##输入为memory和query 就是记忆单元和查询单元，分别计算出最后的值，
+        ###相当于每一个记忆单元和查询值最后得到一个输出
+        ###一共有7天的记忆单元，那么就有7个输出在值
+        ###然后再进行加权？？7天的结果得到不同的值
         if isinstance(inputs, list) and len(inputs) == 2:
             memory, query = inputs
             if self.method is None:
                 return memory[:,-1,:]
+            ###本文用的cba conten_base_attention
             elif self.method == 'cba':
+                ##expand_dims 表示维度变换
                 hidden = K.dot(memory, self.Wh) + K.expand_dims(K.dot(query, self.Wq), 1)
                 hidden = K.tanh(hidden)
+                #squeeze表示移除一个维度
                 s = K.squeeze(K.dot(hidden, self.v), -1)
             elif self.method == 'ga':
                 s = K.sum(K.expand_dims(K.dot(query, self.Wq), 1) * memory, axis=-1)
@@ -68,11 +76,15 @@ class Attention(Layer):
             else:
                 s = K.squeeze(K.dot(memory, self.v), -1)
 
+        ##在利用sofmax函数进行输出
+
         s = K.softmax(s)
         if mask is not None:
             s *= K.cast(mask, dtype='float32')
             sum_by_time = K.sum(s, axis=-1, keepdims=True)
             s = s / (sum_by_time + K.epsilon())
+
+        ##返回基于概率的输出
         return K.sum(memory * K.expand_dims(s), axis=1)
 
     def compute_mask(self, inputs, mask=None):
