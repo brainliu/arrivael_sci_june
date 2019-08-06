@@ -15,9 +15,15 @@
 #################第一步处理数据###########
 ###########first step deal orinignal data which contains flight time/yeater1-7day people
 ################第二步构建模型###########
-#主要公式推导：
+#2019-0728 进行公式推导和思路的明确
+# 主要公式推导：
 #A 生成器模型
 #B LSTM模型1
 #C 吸引力模型
+#Temporal dynamic periodic similarity: periodically shifted attention mechanism
+
 #joint trainning 联合训练
 # optimization 优化器
+###2019-0806 本周务必要把公式推导写完
+##下周8月12日开始写程序来实现这个算法
+##fighting
