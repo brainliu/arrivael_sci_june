@@ -15,20 +15,15 @@
 #################第一步处理数据###########
 ###########first step deal orinignal data which contains flight time/yeater1-7day people
 ################第二步构建模型###########
-#主要公式推导：
+#2019-0728 进行公式推导和思路的明确
+# 主要公式推导：
 #A 生成器模型
 #B LSTM模型1
 #C 吸引力模型
+#Temporal dynamic periodic similarity: periodically shifted attention mechanism
+
 #joint trainning 联合训练
 # optimization 优化器
-########################2019-0801###################################
-################最新的思路模型结构图已经初步构建好
-##1.编码器以及生成器，根据航班时刻生成288个时刻的到达人数
-###完成公式的推导和撰写以及代码部分的实现
-
-
-##2.local LSTM模型
-##3.基于记忆机制的lstms模型
-##4.全连接层
-##5.优化器
-##6.预测结果以及评价指标
+###2019-0806 本周务必要把公式推导写完
+##下周8月12日开始写程序来实现这个算法
+##fighting
