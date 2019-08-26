@@ -27,5 +27,4 @@ outputs = layers.Dense(10, activation='softmax')(h2)
 model = tf.keras.Model(inputs=inputs, outputs=outputs, name='mnist model')
 
 model.summary()
-tf.keras.utils.plot_model(model, 'mnist_model.png')
-tf.keras.utils.plot_model(model, 'model_info.png', show_shapes=True)
+
