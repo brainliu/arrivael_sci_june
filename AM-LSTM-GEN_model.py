@@ -11,6 +11,10 @@
 ###怎么昨天写的没有上传上去呢
 
 ##吸引力模型的类
+import pydot_ng
+print(pydot_ng.find_graphviz())
+
+
 import tensorflow as tf
 from tensorflow.keras import layers
 import tensorflow.keras as keras
@@ -272,6 +276,7 @@ class models:
 
 x=models().stdn(att_lstm_num=7, att_lstm_seq_len=3, lstm_seq_len=48, feature_vec_len=3, cnn_flat_size = 128, lstm_out_size = 128,\
     nbhd_size = 3, nbhd_type = 2)
+from keras.utils import plot_model
 keras.utils.plot_model(x, 'model_info.png', show_shapes=True)
 print(x.summary())
 # nbhd_inputs = [Input(shape = (3, 3, 2,), name = "nbhd_volume_input_time_{0}".format(ts+1)) for ts in range(20)]
@@ -280,3 +285,4 @@ print(x.summary())
 #     for ts in range(20) for att in range(7)]
 # z=[5 for i in range(2) for j in range(3)]
 # print(1)
+
