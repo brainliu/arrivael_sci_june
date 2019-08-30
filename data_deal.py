@@ -2,28 +2,52 @@
 #created by brian
 # create time :2019/7/24-21:04 
 #location: sichuan chengdu
-#处理成1440的数据
-#先用一分钟的数据来进行测试，然后再考虑5分钟的模型，生成器方面也可以进行优化，泊松分布叠加比如这种
-#再去优化泊松分布的参数w
-#以及引入attention机制模型，截取过去7天周期性变化的特征
-#最后得到预测结果
+#####1.泊松分布生成器
+#####2.不同的航班时刻能否单独设置为不同的参数，一共有多少个固定的参数
+####3，梯度下降法去修改这个参数######能够加速训练，捕获结果
+
+########################先不考虑变化参数的问题###############################
+
+######1.历史数据解析以及对过去的数据进行统计################################
+######1.统计得到每一天每分钟的航班人数
+def get_minute_one_count():
+    ##实现一个参数，也就是5分钟、10分钟、15分钟、30分钟 多种组合规则的提取程序
+    #3输出字段：一个是时间、一个是人数、一个是日期
+    pass
+
+def get_inputs_past_w_day_data():
+    ##得到过去w天的数据
+    ##根据不同的分钟数作为输入数据
+    ##配置：单个序列的长度、以及每个吸引力的长度
+    pass
 
 
-#输入数据有 航班时刻，航班人数，先只做国内航班
-#两种思路，一种是只输入航班时刻，不输入人数，人数是根据学习规则来计算的，另一种是输入人数，推荐第一种方法
 
-#################第一步处理数据###########
-###########first step deal orinignal data which contains flight time/yeater1-7day people
-################第二步构建模型###########
-#2019-0728 进行公式推导和思路的明确
-# 主要公式推导：
-#A 生成器模型
-#B LSTM模型1
-#C 吸引力模型
-#Temporal dynamic periodic similarity: periodically shifted attention mechanism
 
-#joint trainning 联合训练
-# optimization 优化器
-###2019-0806 本周务必要把公式推导写完
-##下周8月12日开始写程序来实现这个算法
-##fighting
+
+
+##############2.航班规律到达函数##########################
+#单航班到达规律生成器
+def possion_generator(hb_time,hb_people):
+    result=[0 for i in range(1440)]
+    ##
+    return result
+###多航班叠加
+def multi_flight(hb_time_list,hb_people_list):
+    result2=[0 for i in range(1440)]
+    for i in range(len(hb_time_list)):
+        temp=possion_generator(hb_time_list[i],hb_people_list[i])
+        for j in range(1440):
+            result2[j]+=temp[j]
+    return result2
+
+
+
+
+
+
+
+
+
+
+
