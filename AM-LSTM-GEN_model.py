@@ -126,32 +126,22 @@ class models:
     def __init__(self):
         pass
     #stdn函数
-    def stdn(self, att_lstm_num, att_lstm_seq_len, lstm_seq_len, feature_vec_len, cnn_flat_size = 128, lstm_out_size = 128,\
-    nbhd_size = 3, nbhd_type = 2, map_x_num = 10, map_y_num = 20, flow_type = 4, output_shape = 2, optimizer = 'adagrad', loss = 'mse', metrics=[]):
-        """
-        :param att_lstm_num:
-        :param att_lstm_seq_len:
-        :param lstm_seq_len:
-        :param feature_vec_len:
-        :param cnn_flat_size:
-        :param lstm_out_size:
-        :param nbhd_size:
-        :param nbhd_type:
-        :param map_x_num:
-        :param map_y_num:
-        :param flow_type:
-        :param output_shape:
-        :param optimizer:
-        :param loss:
-        :param metrics:
-        :return:
-        """
-        ##吸引力的输入层：att_lstm_num，也就是过去的时间个数w，每个输入的长度为att_lstm_seq_len
+    #需要定义的输入参数：
+    ##按照5分钟划分间隔 一共有288个点   10分钟划分间隔 144个点 预测6点--24点  5分钟就是 18*12=216个点 10分钟就是108个点  15分钟就是18*4=72个点
+    ##5分钟 每个航班时间区间跨度假设2小时=24，那就是24个短期特征长度 sita=24
+    ## att_lstm_num:吸引力的长度 也就是一共有多少天 长期吸引力天 w=7天
+    ##att_lstm_seg_len:每个吸引子的序列长度 短期吸引力短期特征长度 sitar=24个
+    ##吸引力个数：也就是要预测的个数  φ=216个点，表示预测未来的216个点
+    ##长期时间效应趋势用lstm来捕捉，得到一个h值，短期则用h跟他相关的过去再来捕捉一次sita=24，表示与短期的24个相关
 
-        ##每一个序列的长度为att_lstm_seq_len 也就是48个时间刻度 一共有7天的lstm数据att_lstm_num
-        ##假设有20个时间段相关，然后有7天，这个输入相当于就有140个
+    ###参数指标组合（时间间隔为5分钟==> w=7 sita=24 φ=216）
+    ###           （时间间隔为10分钟==> w=7 sita=12 φ=108）
+    ###                       15        w=7 sita=8  φ=72
+    ###                       30        w=7 sita=4  φ=36
 
-        #假设为7，表示由7个吸引能力的输入，每一个输入长度为att_lstm_seq_len
+    def stdn(self, att_lstm_day, att_lstm_seq_sita, lstm_num_fai, optimizer = 'adagrad', loss = 'mse', metrics=[]):
+
+        
         att_lstm_inputs = [Input(shape = (att_lstm_seq_len, feature_vec_len,), name = "att_lstm_input_{0}".format(att+1)) for att in range(att_lstm_num)]
 
         nbhd_inputs = [Input(shape = (nbhd_size, nbhd_size, nbhd_type,), name = "nbhd_volume_input_time_{0}".format(ts+1)) for ts in range(lstm_seq_len)]
