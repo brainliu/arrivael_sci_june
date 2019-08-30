@@ -98,6 +98,7 @@ class models:
         #feature concatenate
         nbhd_vec = Concatenate(axis=-1)(nbhd_vecs)
         nbhd_vec = Reshape(target_shape = (lstm_seq_len, cnn_flat_size))(nbhd_vec)
+
         ###吸引力模型的一个输入.................
         lstm_input = Concatenate(axis=-1)([lstm_inputs, nbhd_vec])
 

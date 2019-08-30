@@ -26,6 +26,20 @@ import pydot
 print(tf.__version__)
 print(tf.keras.__version__)
 
+class data_generator(layers.Layer):
+    def __init__(self,n_outputs):
+        super(data_generator,self).__init_()
+        self.n_outputs=n_outputs
+
+    def build(self, input_shape):
+        self.kernel = self.add_variable('kernel',
+                                        shape=[int(input_shape[-1]),
+                                               self.n_outputs])
+    def call(self, input):
+        return tf.matmul(input, self.kernel)
+
+
+
 class Attention(layers.Layer):
     def __init__(self, method=None, **kwargs):
         self.supports_masking = True
@@ -139,57 +153,56 @@ class models:
     ###                       15        w=7 sita=8  φ=72
     ###                       30        w=7 sita=4  φ=36
 
-    def stdn(self, att_lstm_day, att_lstm_seq_sita, lstm_num_fai, optimizer = 'adagrad', loss = 'mse', metrics=[]):
+    def stdn(self, att_lstm_day, att_lstm_seq_sita, lstm_num_fai, lstm_out_size=216,output_shape=216,optimizer = 'adagrad', loss = 'mse', metrics=[]):
+        """
+        :param att_lstm_day: 一共过去XXX天的数据
+        :param att_lstm_seq_sita: 吸引力力序列的长度 这里就是sita的值
+        :param lstm_num_fai: 每一天的数据的长度
+        :param optimizer:
+        :param loss:
+        :param metrics:
+        :return:
+        """
 
-        
-        att_lstm_inputs = [Input(shape = (att_lstm_seq_len, feature_vec_len,), name = "att_lstm_input_{0}".format(att+1)) for att in range(att_lstm_num)]
+        ##第一个输入为吸引力 inputs
 
-        nbhd_inputs = [Input(shape = (nbhd_size, nbhd_size, nbhd_type,), name = "nbhd_volume_input_time_{0}".format(ts+1)) for ts in range(lstm_seq_len)]
-        flow_inputs = [Input(shape = (nbhd_size, nbhd_size, flow_type,), name = "flow_volume_input_time_{0}".format(ts+1)) for ts in range(lstm_seq_len)]
-        lstm_inputs = Input(shape = (lstm_seq_len, feature_vec_len,), name = "lstm_input")
+        att_lstm_inputs = [Input(shape = (att_lstm_seq_sita, lstm_num_fai,), name = "att_lstm_input_{0}".format(att+1)) for att in range(att_lstm_day)]
 
-        lstm_input = lstm_inputs
-        #lstm
-        lstm = LSTM(units=lstm_out_size, return_sequences=False, dropout=0.1, recurrent_dropout=0.1)(lstm_input)
+        lstm_inputs = Input(shape = (1,lstm_num_fai), name = "generator_data")
 
-        att_lstm_input = att_lstm_inputs
+        #对产生数据进行一个lstm
+        lstm = LSTM(units=lstm_out_size, return_sequences=False, dropout=0.1, recurrent_dropout=0.1)(lstm_inputs)
 
 
         ####对过去的每一天进行了一个lstm
-        att_lstms = [LSTM(units=lstm_out_size, return_sequences=True, dropout=0.1, recurrent_dropout=0.1, name="att_lstm_{0}".format(att + 1))(att_lstm_input[att]) for att in range(att_lstm_num)]
+        att_lstms = [LSTM(units=lstm_out_size, return_sequences=True, dropout=0.1, recurrent_dropout=0.1, name="att_lstm_{0}".format(att + 1))(att_lstm_inputs[att]) for att in range(att_lstm_day)]
 
         #用的attention中compare这一个方法
         #attention 模型的输入为 attlsems[0] ,lstm
-        #compare
-        att_low_level=[Attention(method='cba')([att_lstms[att], lstm]) for att in range(att_lstm_num)]
+
+        #吸引力模型，分别得到若干个
+        att_low_level=[Attention(method='cba')([att_lstms[att], lstm]) for att in range(att_lstm_day)]
         ##计算得到low_level 也就是每一个memory与要查询的单元的吸引力的结果，对应的是一个预测值
 
         att_low_level=Concatenate(axis=-1)(att_low_level)
         ##然后再把这些值连接在一起，维度得到了增加
-        att_low_level=Reshape(target_shape=(att_lstm_num, lstm_out_size))(att_low_level)
-
+        att_low_level=Reshape(target_shape=(att_lstm_day, lstm_out_size))(att_low_level)
         ######最后再进行了一次lstm，相当于把7填的汇总到一起，进行了一个大的lstm
         att_high_level = LSTM(units=lstm_out_size, return_sequences=False, dropout=0.1, recurrent_dropout=0.1)(att_low_level)
-
 
         ##相当于有8个lstm？？，8个一起求权重
         lstm_all = Concatenate(axis=-1)([att_high_level, lstm])
         ###
-        # lstm_all = Dropout(rate = .3)(lstm_all)
         lstm_all = Dense(units = output_shape)(lstm_all)
         pred_volume = Activation('tanh')(lstm_all)
 
-
-        inputs =  att_lstm_inputs + nbhd_inputs + flow_inputs + [lstm_inputs,]
-        # print("Model input length: {0}".format(len(inputs)))
-        # ipdb.set_trace()
+        inputs =  att_lstm_inputs  + [lstm_inputs,]
         model = Model(inputs = inputs, outputs = pred_volume)
         model.compile(optimizer = optimizer, loss = loss, metrics=metrics)
         return model
 
-x=models().stdn(att_lstm_num=7, att_lstm_seq_len=20, lstm_seq_len=48, feature_vec_len=3, cnn_flat_size = 128, lstm_out_size = 128,\
-    nbhd_size = 3, nbhd_type = 2)
-keras.utils.plot_model(x, 'model_info.png', show_shapes=True)
+x=models().stdn(att_lstm_day=7, att_lstm_seq_sita=20, lstm_num_fai=216)
+keras.utils.plot_model(x, 'model_info_V2.png', show_shapes=True)
 print(x.summary())
 # nbhd_inputs = [Input(shape = (3, 3, 2,), name = "nbhd_volume_input_time_{0}".format(ts+1)) for ts in range(20)]
 # flatten_att_nbhd_inputs = [
@@ -197,4 +210,5 @@ print(x.summary())
 #     for ts in range(20) for att in range(7)]
 # z=[5 for i in range(2) for j in range(3)]
 # print(1)
-
+# model.fit(x=att_cnnx + att_flow + att_x + cnnx + flow + [x, ],
+#           y=y,atch_size=128, , epochs=max_epochs, callbacks=[EarlyStopping()])
