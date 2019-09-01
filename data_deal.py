@@ -6,11 +6,9 @@
 #####2.不同的航班时刻能否单独设置为不同的参数，一共有多少个固定的参数
 ####3，梯度下降法去修改这个参数######能够加速训练，捕获结果
 
-
 import numpy as np
 import matplotlib.pyplot as plt
-
-########################先不考虑变化参数的问题###############################
+########################！！！！先不考虑变化参数的问题###############################
 
 ######1.历史数据解析以及对过去的数据进行统计################################
 ######1.统计得到每一天每分钟的航班人数
@@ -26,11 +24,9 @@ def get_inputs_past_w_day_data():
     pass
 
 
-
 ##############2.航班规律到达函数##########################
 #单航班到达规律生成器
 def possion_generator(hb_time,hb_people):
-
 
     result=[0 for i in range(1440)]
     ##分成三段叠加
@@ -38,9 +34,54 @@ def possion_generator(hb_time,hb_people):
     ##                       0.25         0.5           0.25
     ##先生成到达时间，从第一段低密度开始，最远的地方，距离航班起飞最远到最近45分钟，截至人数全部到达
     # 初始化三个时间区间长度
+    ##整体的时间长度，后面通过泊松分布算出来的时间分布可能高于这个值呢
+    ##从第45分钟开始
     time_interval_low1=25
     time_interval_high2=80
     time_interval_low3=60
+    ###上面三个为时间的跨度
+    time_scale_last=[0,0,0]   #记录最后一个值为多少
+    times_scale_chen=[0,0,0]
+    time_arrival_all=[]       #记录每个人的到达时间间隔时间，一共有多少个人人就有多少个数据，最后再把这些数据映射到1440上面去！
+    #高密度和低密度的比例
+    low_percent=0.25
+    high_percent=0.5
+    low_people_1=low_percent*hb_people
+    high_peole_2 = high_percent * hb_people
+    low_people_3=low_people_1
+
+    ##计算每个人的到达时间  距离起飞还有45分钟-80分钟的人数的到达时间
+    temp_arrival_time1=hb_time-210+45 #每一段的开始时间 （第一段）
+    temp_arrival_time2=temp_arrival_time1+time_interval_low1  #（第二段 高密度，开始时间）
+    temp_arrival_time3=temp_arrival_time2+time_interval_high2  #（第三段， 低密度，开始时间)
+
+
+    for i in range(low_people_1):
+        next_times_Arrival=np.random.exponential(1)
+        time_arrival_all.append(next_times_Arrival)
+        time_scale_last[0]+=next_times_Arrival
+    for i in range(high_peole_2):
+        next_times_Arrival = np.random.exponential(1)
+        time_arrival_all.append(next_times_Arrival)
+        time_scale_last[1] += next_times_Arrival
+    for i in range(low_people_3):
+        next_times_Arrival = np.random.exponential(1)
+        time_arrival_all.append(next_times_Arrival)
+        time_scale_last[2] += next_times_Arrival
+    ##将得到的规模进行转换
+    times_scale_chen[0]=float(time_interval_low1/time_scale_last[0])
+    times_scale_chen[1] = float(time_interval_high2 / time_scale_last[1])
+    times_scale_chen[2] = float(time_interval_low3 / time_scale_last[2])
+    for j in range(3):
+        print(times_scale_chen[j])
+
+    for i in range(low_people_1):
+        next_times_Arrival=np.random.exponential(1)
+        time_arrival_all.append(next_times_Arrival)
+        time_scale_last[0]+=next_times_Arrival
+
+
+
 
 
     return result
@@ -54,7 +95,7 @@ def multi_flight(hb_time_list,hb_people_list):
     return result2
 
 
-###画图对比函数
+#######3.画图对比函数#################################################
 def plot(data,name):
     y = range(1440)
     plt.plot(y, data, ls='dashed',

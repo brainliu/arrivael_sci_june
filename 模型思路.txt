@@ -67,16 +67,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
 ################################anylogic 上面的旅客到达规律模型算法###########################
 int lowIntensityPassengers = flight.passengersQuantity / 4;
 int highIntensityPassengers = flight.passengersQuantity - 2 * lowIntensityPassengers;

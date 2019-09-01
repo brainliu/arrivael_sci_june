@@ -59,7 +59,8 @@ print(mean, var, skew, kurt)
 # ppf:累积分布函数的反函数。q=0.01时，ppf就是p(X<x)=0.01时的x值。
 x = np.linspace(st.expon.ppf(0.01, loc, scale), st.expon.ppf(0.99, loc, scale), 100)
 ax.plot(x, st.expon.pdf(x, loc, scale), 'b-', label='expon')
-
+plt.title(u'指数分布概率密度函数')
+plt.show()
 
 
 ###模拟泊松分布生成下一个旅客的到达时间（假设服从1）
@@ -68,9 +69,8 @@ import scipy.stats as st
 import matplotlib.pyplot as plt
 import scipy.stats as st
 
-plt.title(u'指数分布概率密度函数')
-plt.show()
+
 for i in range(20):
-        pp= np.random.poisson(20)
+        pp= np.random.exponential(1)
         print(pp)
 
