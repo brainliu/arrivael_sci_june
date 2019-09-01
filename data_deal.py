@@ -28,7 +28,7 @@ def get_inputs_past_w_day_data():
 #单航班到达规律生成器
 def possion_generator(hb_time,hb_people):
 
-    result=[0 for i in range(1440)]
+    time_people=[0 for i in range(1440)]
     ##分成三段叠加
     #时间上分段45-210分钟，1==》45-70  2===》 70-150  3===》150-210  三段之间的比例计算为
     ##                       0.25         0.5           0.25
@@ -46,15 +46,15 @@ def possion_generator(hb_time,hb_people):
     #高密度和低密度的比例
     low_percent=0.25
     high_percent=0.5
-    low_people_1=low_percent*hb_people
-    high_peole_2 = high_percent * hb_people
+    low_people_1=int(low_percent*hb_people)
+    high_peole_2 = int(high_percent * hb_people)
     low_people_3=low_people_1
 
     ##计算每个人的到达时间  距离起飞还有45分钟-80分钟的人数的到达时间
     temp_arrival_time1=hb_time-210+45 #每一段的开始时间 （第一段）
     temp_arrival_time2=temp_arrival_time1+time_interval_low1  #（第二段 高密度，开始时间）
     temp_arrival_time3=temp_arrival_time2+time_interval_high2  #（第三段， 低密度，开始时间)
-
+    result=[]
 
     for i in range(low_people_1):
         next_times_Arrival=np.random.exponential(1)
@@ -76,15 +76,18 @@ def possion_generator(hb_time,hb_people):
         print(times_scale_chen[j])
 
     for i in range(low_people_1):
-        next_times_Arrival=np.random.exponential(1)
-        time_arrival_all.append(next_times_Arrival)
-        time_scale_last[0]+=next_times_Arrival
-
-
-
-
-
-    return result
+        temp_arrival_time1+=time_arrival_all[i]*times_scale_chen[0]
+        result.append(temp_arrival_time1)
+    for i in range(low_people_1,high_peole_2+low_people_1):
+        temp_arrival_time2+=time_arrival_all[i]*times_scale_chen[1]
+        result.append(temp_arrival_time2)
+    for i in range(high_peole_2+low_people_1,hb_people):
+        temp_arrival_time3+=time_arrival_all[i]*times_scale_chen[2]
+        result.append(temp_arrival_time3)
+    ##现在的result就是每个人的到达时间，下一步就是进行排序和统计每分钟的人数：
+    for k in result:
+        time_people[int(k)]+=1
+    return time_people
 ###多航班叠加
 def multi_flight(hb_time_list,hb_people_list):
     result2=[0 for i in range(1440)]
@@ -100,11 +103,14 @@ def plot(data,name):
     y = range(1440)
     plt.plot(y, data, ls='dashed',
              lw=2, c='r', label='Poisson distribution\n$(\lambda=%s)$'%name)
+    #plt.xlim(200,400)
+    plt.savefig("test.png")
     plt.show()
 
 
-
-
+test_peoples=possion_generator(400,500)
+print(test_peoples)
+plot(test_peoples,"500ren")
 
 
 
