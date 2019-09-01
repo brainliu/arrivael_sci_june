@@ -60,3 +60,59 @@
 #按照泊松分布概率密度的思想，去根据航班时刻和航班人数，生成每一天的全部人数，最后再提取出需要的长度，作为模型的一个处理层
 ##下周09.02-09.08  完成所有的图表和结果分析
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+################################anylogic 上面的旅客到达规律模型算法###########################
+int lowIntensityPassengers = flight.passengersQuantity / 4;
+int highIntensityPassengers = flight.passengersQuantity - 2 * lowIntensityPassengers;
+double[] lastArrivalInInterval = new double[3];
+double[] timeScaleForInterval = new double[3];
+// Generate random arrival times for three types of arrival intensity
+for (int i = 0; i < lowIntensityPassengers; i ++) {
+	double nextArrival = exponential(1);
+	interArrivalTimes.add(nextArrival);
+	lastArrivalInInterval[0] += nextArrival;
+}
+for (int i = 0; i < highIntensityPassengers; i++) {
+	double nextArrival = exponential(1);
+	interArrivalTimes.add(nextArrival);
+	lastArrivalInInterval[1] += nextArrival;
+}
+for (int i = 0; i < lowIntensityPassengers; i ++) {
+	double nextArrival = exponential(1);
+	interArrivalTimes.add(nextArrival);
+	lastArrivalInInterval[2] += nextArrival;
+}
+// Calculate necessary time scale
+for (int i = 0; i < 3; i++) {
+	timeScaleForInterval[i] = main.arrivalIntensitiesTimeInterval[i] / lastArrivalInInterval[i];
+}
+// Scale arrival times
+for (int i = 0; i < lowIntensityPassengers; i ++) {
+	interArrivalTimes.set(i, interArrivalTimes.get(i) * timeScaleForInterval[0]);
+}
+for (int i = lowIntensityPassengers; i < highIntensityPassengers + lowIntensityPassengers; i++) {
+	interArrivalTimes.set(i, interArrivalTimes.get(i) * timeScaleForInterval[1]);
+}
+for (int i = highIntensityPassengers + lowIntensityPassengers; i < flight.passengersQuantity; i ++) {
+	interArrivalTimes.set(i, interArrivalTimes.get(i) * timeScaleForInterval[2]);
+}
+// Define arrival event
+if (interArrivalTimes.size() > 0)
+injectOrdinaryPassenger.restart(flight.time - main.timeFromStartPassengersArrivalToDeparture + interArrivalTimes.remove(0));
+###############################################################################
