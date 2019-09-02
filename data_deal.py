@@ -16,9 +16,27 @@ import pandas as pd
 
 
 ######1.统计得到每一天每分钟的航班人数，历史数据
-def get_minute_one_count():
+def get_minute_one_count(data_temp_one_day,day):
     ##得到某一天的1440的每分钟的人数
     #3输出字段：一个是时间、一个是人数、一个是日期
+    result = [0 for i in range(1440)]
+    arrival_time = list(data_temp_one_day["CHECKINTIME"].values)
+    for i in arrival_time:
+        result[i] += 1
+    hb_date=[day for i in range(1440)]
+    result_all=pd.DataFrame({"hb_date":hb_date,"time":[i for i in range(1440)],"hb_people":result})
+    return result_all
+
+data=pd.read_csv("./data_ori/flight_filted6.csv")
+data_temp_one_day=data[data["SCHETIME_date"]==13]
+#统计每分钟的人数，先出来一分钟的人数
+
+
+
+#得到所有天的X分钟到达人数,并聚合在一起，汇总成一张表
+def get_minute_one_count_all(filename="./data_ori/flight_filted6.csv"):
+    data = pd.read_csv("./data_ori/flight_filted6.csv")
+    data_temp_one_day = data[data["SCHETIME_date"] == 13]
     pass
 
 def get_inputs_past_w_day_data():
@@ -32,36 +50,54 @@ def get_aggravte_minute():
     pass
 
 
-def get_hb_schedule():
+
+def get_hb_schedule(hb_data_one_Day,day,hb_time_all):
     ##处理数据得到所有的航班计划
-    pass
+
+    #
+    sums = hb_data_one_Day["CHECKINTIME"].groupby([hb_data_one_Day["SCHETIME"]]).count()
+
+    index_time = hb_data_one_Day.drop_duplicates("SCHETIME")["SCHETIME"].sort_values()
+    index_time = list(index_time)
+    index_people = list(sums)
+
+    resut_hb_people = [0 for i in hb_time_all]
+    for index in range(len(index_time)):
+        time_temp = index_time[index]
+        people_temp = index_people[index]
+        resut_hb_people[hb_time_all.index(time_temp)] += people_temp
+    hb_date = [day for i in hb_time_all ]
+    hb_time_and_people = pd.DataFrame({"hb_people": resut_hb_people, "hb_time": hb_time_all,"hb_date":hb_date})
+    #print(hb_time_and_people)
+    return hb_time_and_people
+
+def get_all_hb_time_people(hb_time_all,filename="./data_ori/flight_filted6.csv"):
+    """
+    :param hb_time_all:所有的航班时间，去除重复了的
+    :param filename: 数据文件，月份
+    :return: 返回当月的航班计划，对齐了的航班时间，保证统计输入
+    """
+    data = pd.read_csv(filename)
+    ##将所有数据汇总得到407个航班时间和航班人数，对应不同的航空公司
+    #初始化  13日
+    hb_data_day_13 = data[data["SCHETIME_date"] == 13]
+    result=get_hb_schedule(hb_data_day_13, 13, hb_time_all)
+    for day in range(14,28):
+        try:
+
+            data_day_temp=get_hb_schedule(data[data["SCHETIME_date"] == day], day, hb_time_all)
+            result=result.append(data_day_temp)
+            print(result)
+        except:
+            print("day ==>%s not exist!"%day)
+    result.to_csv("6.csv")
+    return result
 
 
-
-data=pd.read_csv("./data_ori/flight_filted6.csv")
-hb_schedule=data.drop_duplicates(subset=["SCHETIME"])
-hb_schedule_all=hb_schedule[["SCHETIME"]]
-hb_schedule_all.to_csv("./data_ori/hb_all_table.csv")
-##6月份有407个航班 里面可能有重复的时间 200个时间有航班，只计算航班时间对应人数就行了，简化计算一下
-#对每一天生成一个list 长度为407的 代表这407个航班是否存在的序列
-
-hb_time_all=sorted(list(hb_schedule_all["SCHETIME"]))
-##将所有数据汇总得到407个航班时间和航班人数，对应不同的航空公司
 ##这里面需要一个判断逻辑
-def get_every_day_inout_schedule():
-    #对每一天的数据进行处理，得到6月份每一天的航班计划输入格式
-    #200*1
-    pass
+##测试日期为13号这一天
 
 
-hb_data_one_Day=data[data["SCHETIME_date"]==13]
-sums=hb_data_one_Day["CHECKINTIME"].groupby([hb_data_one_Day["SCHETIME"]]).count()
-index_time=hb_data_one_Day.drop_duplicates("SCHETIME")["SCHETIME"].sort_values()
-index_people=list(sums)
-resut_hb_people=[0 for i in hb_time_all]
-
-
-print(sums)
 ##############2.航班规律到达函数##########################
 #单航班到达规律生成器
 def possion_generator(hb_time,hb_people):
@@ -156,10 +192,23 @@ def plot(data,name):
     plt.show()
 
 
-test_peoples=possion_generator(400,500)
-print(test_peoples)
-plot(test_peoples,"500ren")
+# test_peoples=possion_generator(400,500)
+# print(test_peoples)
+# plot(test_peoples,"500ren")
 
+############得到这个月的##################
+
+def Tst():
+    data = pd.read_csv("./data_ori/flight_filted6.csv")
+    hb_schedule = data.drop_duplicates(subset=["SCHETIME"])
+    hb_schedule_all = hb_schedule[["SCHETIME"]]
+    # .to_csv("./data_ori/hb_all_table.csv")
+    ##6月份有407个航班 里面可能有重复的时间 200个时间有航班，只计算航班时间对应人数就行了，简化计算一下
+    # 对每一天生成一个list 长度为407的 代表这407个航班是否存在的序列
+    hb_time_all = sorted(list(hb_schedule_all["SCHETIME"]))  ##拍好序的所有航班时间的数据
+    get_all_hb_time_people(hb_time_all,"./data_ori/flight_filted6.csv")
+
+#Tst()
 
 
 
