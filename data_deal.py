@@ -2,26 +2,25 @@
 #created by brian
 # create time :2019/7/24-21:04 
 #location: sichuan chengdu
-#####1.泊松分布生成器
-#####2.不同的航班时刻能否单独设置为不同的参数，一共有多少个固定的参数
-####3，梯度下降法去修改这个参数######能够加速训练，捕获结果
+#############################################################################
+#####1.泊松分布生成器                                                 #######
+#####2.不同的航班时刻能否单独设置为不同的参数，一共有多少个固定的参数 #######
+####3，梯度下降法去修改这个参数######能够加速训练，捕获结果           #######
+#############################################################################
 
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-########################！！！！先不考虑变化参数的问题###############################
+########################！！！！先不考虑变化参数的问题####################################
 
-######1.航班计划的解析以及得到每一天各航班时刻下的人数################################
-######1.1每一天的航班计划解析1440分钟
+######1.航班计划的解析以及得到每一天各航班时刻下的人数#####################################
+#1.1解析一天的航班计划，到标准长度的数组中
 def get_hb_schedule(hb_data_one_Day,day,hb_time_all):
     ##处理数据得到所有的航班计划
-    #
     sums = hb_data_one_Day["CHECKINTIME"].groupby([hb_data_one_Day["SCHETIME"]]).count()
-
     index_time = hb_data_one_Day.drop_duplicates("SCHETIME")["SCHETIME"].sort_values()
     index_time = list(index_time)
     index_people = list(sums)
-
     resut_hb_people = [0 for i in hb_time_all]
     for index in range(len(index_time)):
         time_temp = index_time[index]
@@ -31,7 +30,7 @@ def get_hb_schedule(hb_data_one_Day,day,hb_time_all):
     hb_time_and_people = pd.DataFrame({"hb_people": resut_hb_people, "hb_time": hb_time_all,"hb_date":hb_date})
     #print(hb_time_and_people)
     return hb_time_and_people
-######1.2.统计得到所有的航班的人数和时间1440分钟
+######1.2.统计得到所有的航班的人数到标准数组长度中去
 def get_all_hb_time_people(hb_time_all,filename="./data_ori/flight_filted6.csv"):
     """
     :param hb_time_all:所有的航班时间，去除重复了的
@@ -54,7 +53,7 @@ def get_all_hb_time_people(hb_time_all,filename="./data_ori/flight_filted6.csv")
             continue
     result.to_csv("6.csv")
     return result
-
+#####2.历史数据解析，每一天个时刻的人数1440分钟
 #2.1统计每分钟的人数，先出来一分钟的人数
 def get_minute_one_count(data_temp_one_day,day):
     ##得到某一天的1440的每分钟的人数
@@ -78,29 +77,19 @@ def get_minute_one_count_all(filename="./data_ori/flight_filted6.csv"):
             continue
     return result
 
+######3，数据聚合，按照5分钟，10分钟，15分钟，30分钟 4个级别来进行聚合######################
+def get_aggravte_minute():
+    ##得到每分钟的聚合人数
+    pass
 
-######4.计算过去w天的数据，整合在一起##################################
+######4.计算过去w天的数据，整合在一起#######################################################
 def get_inputs_past_w_day_data():
     ##得到过去w天的数据
     ##根据不同的分钟数作为输入数据
     ##配置：单个序列的长度、以及每个吸引力的长度
     pass
-######3，数据聚合，按照5分钟，10分钟，15分钟，30分钟 4个级别来进行聚合
-def get_aggravte_minute():
-    ##得到每分钟的聚合人数
 
-    pass
-
-
-
-
-
-
-##这里面需要一个判断逻辑
-##测试日期为13号这一天
-
-
-##############2.航班规律到达函数##########################
+##############5.航班规律到达函数############################################################
 #单航班到达规律生成器
 def possion_generator(hb_time,hb_people):
     ###可能存在需要训练的参数
@@ -184,7 +173,7 @@ def multi_flight(hb_time_list,hb_people_list):
     return result2
 
 
-#######3.画图对比函数#################################################
+#######6.画图对比函数#######################################################################
 def plot(data,name):
     y = range(1440)
     plt.plot(y, data, ls='dashed',
@@ -193,13 +182,7 @@ def plot(data,name):
     plt.savefig("test.png")
     plt.show()
 
-
-# test_peoples=possion_generator(400,500)
-# print(test_peoples)
-# plot(test_peoples,"500ren")
-
-############得到这个月的##################
-
+############7.测试###########################################################################
 def Tst():
     data = pd.read_csv("./data_ori/flight_filted6.csv")
     hb_schedule = data.drop_duplicates(subset=["SCHETIME"])
@@ -209,11 +192,13 @@ def Tst():
     # 对每一天生成一个list 长度为407的 代表这407个航班是否存在的序列
     hb_time_all = sorted(list(hb_schedule_all["SCHETIME"]))  ##拍好序的所有航班时间的数据
     get_all_hb_time_people(hb_time_all,"./data_ori/flight_filted6.csv")
-
+    # test_peoples=possion_generator(400,500)
+    # print(test_peoples)
+    # plot(test_peoples,"500ren")
+    result = get_minute_one_count_all(filename="./data_ori/flight_filted6.csv")
+    result.to_csv("./data_ori/everyday.csv")
 #Tst()
 
-result=get_minute_one_count_all(filename="./data_ori/flight_filted6.csv")
-result.to_csv("./data_ori/everyday.csv")
 
 
 
