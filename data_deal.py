@@ -11,49 +11,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 ########################！！！！先不考虑变化参数的问题###############################
 
-######1.历史数据解析以及对过去的数据进行统计################################
-
-
-
-######1.统计得到每一天每分钟的航班人数，历史数据
-def get_minute_one_count(data_temp_one_day,day):
-    ##得到某一天的1440的每分钟的人数
-    #3输出字段：一个是时间、一个是人数、一个是日期
-    result = [0 for i in range(1440)]
-    arrival_time = list(data_temp_one_day["CHECKINTIME"].values)
-    for i in arrival_time:
-        result[i] += 1
-    hb_date=[day for i in range(1440)]
-    result_all=pd.DataFrame({"hb_date":hb_date,"time":[i for i in range(1440)],"hb_people":result})
-    return result_all
-
-data=pd.read_csv("./data_ori/flight_filted6.csv")
-data_temp_one_day=data[data["SCHETIME_date"]==13]
-#统计每分钟的人数，先出来一分钟的人数
-
-
-
-#得到所有天的X分钟到达人数,并聚合在一起，汇总成一张表
-def get_minute_one_count_all(filename="./data_ori/flight_filted6.csv"):
-    data = pd.read_csv("./data_ori/flight_filted6.csv")
-    data_temp_one_day = data[data["SCHETIME_date"] == 13]
-    pass
-
-def get_inputs_past_w_day_data():
-    ##得到过去w天的数据
-    ##根据不同的分钟数作为输入数据
-    ##配置：单个序列的长度、以及每个吸引力的长度
-    pass
-
-def get_aggravte_minute():
-    ##得到每分钟的聚合人数
-    pass
-
-
-
+######1.航班计划的解析以及得到每一天各航班时刻下的人数################################
+######1.1每一天的航班计划解析1440分钟
 def get_hb_schedule(hb_data_one_Day,day,hb_time_all):
     ##处理数据得到所有的航班计划
-
     #
     sums = hb_data_one_Day["CHECKINTIME"].groupby([hb_data_one_Day["SCHETIME"]]).count()
 
@@ -70,7 +31,7 @@ def get_hb_schedule(hb_data_one_Day,day,hb_time_all):
     hb_time_and_people = pd.DataFrame({"hb_people": resut_hb_people, "hb_time": hb_time_all,"hb_date":hb_date})
     #print(hb_time_and_people)
     return hb_time_and_people
-
+######1.2.统计得到所有的航班的人数和时间1440分钟
 def get_all_hb_time_people(hb_time_all,filename="./data_ori/flight_filted6.csv"):
     """
     :param hb_time_all:所有的航班时间，去除重复了的
@@ -90,8 +51,49 @@ def get_all_hb_time_people(hb_time_all,filename="./data_ori/flight_filted6.csv")
             print(result)
         except:
             print("day ==>%s not exist!"%day)
+            continue
     result.to_csv("6.csv")
     return result
+
+#2.1统计每分钟的人数，先出来一分钟的人数
+def get_minute_one_count(data_temp_one_day,day):
+    ##得到某一天的1440的每分钟的人数
+    #3输出字段：一个是时间、一个是人数、一个是日期
+    result = [0 for i in range(1440)]
+    arrival_time = list(data_temp_one_day["CHECKINTIME"].values)
+    for i in arrival_time:
+        result[i] += 1
+    hb_date=[day for i in range(1440)]
+    result_all=pd.DataFrame({"hb_date":hb_date,"time":[i for i in range(1440)],"hb_people":result})
+    return result_all
+#2.2得到所有天的X分钟到达人数,并聚合在一起，汇总成一张表
+def get_minute_one_count_all(filename="./data_ori/flight_filted6.csv"):
+    data = pd.read_csv(filename)
+    data_temp_one_day = data[data["SCHETIME_date"] == 13]
+    result=get_minute_one_count(data_temp_one_day,13)
+    for day_index in range(14,28):
+        try:
+            result=result.append(get_minute_one_count(data[data["SCHETIME_date"] == day_index],day_index))
+        except:
+            continue
+    return result
+
+
+######4.计算过去w天的数据，整合在一起##################################
+def get_inputs_past_w_day_data():
+    ##得到过去w天的数据
+    ##根据不同的分钟数作为输入数据
+    ##配置：单个序列的长度、以及每个吸引力的长度
+    pass
+######3，数据聚合，按照5分钟，10分钟，15分钟，30分钟 4个级别来进行聚合
+def get_aggravte_minute():
+    ##得到每分钟的聚合人数
+
+    pass
+
+
+
+
 
 
 ##这里面需要一个判断逻辑
@@ -210,7 +212,8 @@ def Tst():
 
 #Tst()
 
-
+result=get_minute_one_count_all(filename="./data_ori/flight_filted6.csv")
+result.to_csv("./data_ori/everyday.csv")
 
 
 
