@@ -47,11 +47,11 @@ def get_all_hb_time_people(hb_time_all,filename="./data_ori/flight_filted6.csv")
 
             data_day_temp=get_hb_schedule(data[data["SCHETIME_date"] == day], day, hb_time_all)
             result=result.append(data_day_temp)
-            print(result)
+           # print(result)
         except:
             print("day ==>%s not exist!"%day)
             continue
-    result.to_csv("6.csv")
+    result.to_csv("./data/6.csv")
     return result
 #####2.历史数据解析，每一天个时刻的人数1440分钟
 #2.1统计每分钟的人数，先出来一分钟的人数
@@ -80,8 +80,18 @@ def get_minute_one_count_all(filename="./data_ori/flight_filted6.csv"):
 ######3，数据聚合，按照5分钟，10分钟，15分钟，30分钟 4个级别来进行聚合######################
 def get_aggravte_minute():
     ##得到每分钟的聚合人数
-    pass
 
+    pass
+interval=5
+data=pd.read_csv("./data/everyday.csv")
+day_lists=sorted(list(data.drop_duplicates("hb_date")["hb_date"].values))
+hb_people=[0 for i in range(1440/interval)]
+
+for day_index in day_lists:
+    data_temp_day=data[data["hb_date"]==day_index]
+    hb_people_1440=list(data_temp_day["hb_people"].values)
+    for i in range(len(hb_people_1440)):
+        index=int(i/interval) #获取聚合后的新的时间长度
 ######4.计算过去w天的数据，整合在一起#######################################################
 def get_inputs_past_w_day_data():
     ##得到过去w天的数据
@@ -197,7 +207,8 @@ def Tst():
     # plot(test_peoples,"500ren")
     result = get_minute_one_count_all(filename="./data_ori/flight_filted6.csv")
     result.to_csv("./data_ori/everyday.csv")
-#Tst()
+
+# Tst()
 
 
 
