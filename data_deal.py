@@ -14,7 +14,7 @@ import pandas as pd
 ########################！！！！先不考虑变化参数的问题####################################
 
 ######1.航班计划的解析以及得到每一天各航班时刻下的人数#####################################
-#1.1解析一天的航班计划，到标准长度的数组中
+#####1.1解析一天的航班计划，到标准长度的数组中
 def get_hb_schedule(hb_data_one_Day,day,hb_time_all):
     ##处理数据得到所有的航班计划
     sums = hb_data_one_Day["CHECKINTIME"].groupby([hb_data_one_Day["SCHETIME"]]).count()
@@ -53,6 +53,7 @@ def get_all_hb_time_people(hb_time_all,filename="./data_ori/flight_filted6.csv")
             continue
     result.to_csv("./data/6.csv")
     return result
+
 #####2.历史数据解析，每一天个时刻的人数1440分钟
 #2.1统计每分钟的人数，先出来一分钟的人数
 def get_minute_one_count(data_temp_one_day,day):
@@ -77,26 +78,83 @@ def get_minute_one_count_all(filename="./data_ori/flight_filted6.csv"):
             continue
     return result
 
-######3，数据聚合，按照5分钟，10分钟，15分钟，30分钟 4个级别来进行聚合######################
-def get_aggravte_minute():
+
+######3，数据聚合，按照5分钟，10分钟get_arrtavte_minutes_one，15分钟，30分钟 4个级别来进行聚合######################
+#得到了在day_index下的航班人数聚合，下一步是将每一天的数据叠加在一起
+def get_arrtavte_minutes_one(hb_people,interval,day_index):
+    hb_people_result= [0 for i in range(int(1440 / interval))]
+    hb_date_result=[day_index for i in range(int(1440/ interval))]
+    time_result=[i for i in range(int(1440 / interval))]
+    for i in range(len(hb_people)):
+        index=int(i/interval) #获取聚合后的新的时间长度
+        hb_people_result[index]+=hb_people[i]
+    #返回一个dataframe
+    return  pd.DataFrame({"hb_date":hb_date_result,"hb_people":hb_people_result,"time":time_result})
+#得到每一天再不同的时间间隔内的各个时刻的人数
+def get_arrtavte_minutes_all(data_file="./data/everyday.csv",interval=5):
     ##得到每分钟的聚合人数
+    data = pd.read_csv(data_file)
+    # 一共有多少天的数据需要处理
+    day_lists = sorted(list(data.drop_duplicates("hb_date")["hb_date"].values))
+    result_all = get_arrtavte_minutes_one(list(data[data["hb_date"] == day_lists[0]]["hb_people"].values), interval,
+                                          day_lists[0])
+    for day_index in day_lists[1:]:
+        print(day_index)
+        # 处理成结果的数据的时间区间
+        result_all = result_all.append(
+            get_arrtavte_minutes_one(list(data[data["hb_date"] == day_index]["hb_people"].values), interval, day_index))
+    result_all.to_csv("./data/everyday_interval_%d.csv" % interval)
+    pass
+
+
+######4.计算过去w天的数据，整合在一起#######################################################
+##按照5分钟划分间隔 一共有288个点   10分钟划分间隔 144个点 预测6点--24点  5分钟就是 18*12=216个点 10分钟就是108个点  15分钟就是18*4=72个点
+    ##5分钟 每个航班时间区间跨度假设2小时=24，那就是24个短期特征长度 sita=24
+    ## att_lstm_num:吸引力的长度 也就是一共有多少天 长期吸引力天 w=7天
+    ##att_lstm_seg_len:每个吸引子的序列长度 短期吸引力短期特征长度 sitar=24个
+    ##吸引力个数：也就是要预测的个数  φ=216个点，表示预测未来的216个点
+    ##长期时间效应趋势用lstm来捕捉，得到一个h值，短期则用h跟他相关的过去再来捕捉一次sita=24，表示与短期的24个相关
+
+    ###参数指标组合（时间间隔为5分钟==> w=7 sita=24 φ=216）
+    ###           （时间间隔为10分钟==> w=7 sita=12 φ=108）
+    ###                       15        w=7 sita=8  φ=72
+    ###                       30        w=7 sita=4  φ=36
+def get_inputs_past_w_day_data_one(all_data,day_index,past_w_day,past_q_time,orignial_length):
+    """
+    :param data_frame:包含所有数据的DataFrame，而且是包含了目标日的过去7天的
+    :param past_w_day: 过去的某几天，这里数据比较少，13-28，那就只能用20-28这几天，如果选取7天的话
+    :param past_q_time: 过去的q个时刻，也就是288个时间间隔的时候，选取5
+    :param orignial_length:
+    :return: past_w_day_dataframe，以及taoget_frame,最后装在一个dataframe中，然后输出为两个dataframe
+    """
 
     pass
-interval=5
-data=pd.read_csv("./data/everyday.csv")
-day_lists=sorted(list(data.drop_duplicates("hb_date")["hb_date"].values))
-hb_people=[0 for i in range(1440/interval)]
+data= pd.read_csv("./data/everyday_interval_5.csv")
+day_lists= sorted(list(data['hb_date'].values)) #all days
+last_day_index=len(day_lists)
+#直接指定第8天，来看过去的7天
+target_day_index=7
+past_q_time=20
+orignial_length=288
+result=dict()
+for past_day_index in range(0,target_day_index):
+    data_temp=data[data["hb_date"]==day_lists[past_day_index]] #取出当天的data计算
+    hb_people_temp=list(data_temp["hb_people"].values)
+    for i in range(past_q_time):#过去的几个时刻
+       name="w_%s_%d"%(past_day_index,i)
+       result[name]=[]
+       #从第0个开始计算，0就是0-267 也就是 i->orignial_length-past_q_time-1+i 长度均为orignial_length-past_q_time
+       for j in range(i,orignial_length-past_q_time+i):
+           (result[name]).append(hb_people_temp[j])
+pd.DataFrame(result).to_csv("./data/past_w.csv")
 
-for day_index in day_lists:
-    data_temp_day=data[data["hb_date"]==day_index]
-    hb_people_1440=list(data_temp_day["hb_people"].values)
-    for i in range(len(hb_people_1440)):
-        index=int(i/interval) #获取聚合后的新的时间长度
-######4.计算过去w天的数据，整合在一起#######################################################
-def get_inputs_past_w_day_data():
-    ##得到过去w天的数据
-    ##根据不同的分钟数作为输入数据
-    ##配置：单个序列的长度、以及每个吸引力的长度
+
+
+
+def get_inputs_past_w_day_data_all(data_file,past_w_day,past_q_time,orignial_length):
+    ##得到过去w天的数据，根据不同的分钟数作为输入数据，配置：单个序列的长度、以及每个吸引力的长度
+    ###根据past_q_time和总的长度，判断，整体的数据size=（orignial_length-past_q_time，past_q_time)
+    #先处理一天的数据
     pass
 
 ##############5.航班规律到达函数############################################################
@@ -205,9 +263,9 @@ def Tst():
     # test_peoples=possion_generator(400,500)
     # print(test_peoples)
     # plot(test_peoples,"500ren")
-    result = get_minute_one_count_all(filename="./data_ori/flight_filted6.csv")
-    result.to_csv("./data_ori/everyday.csv")
-
+    # result = get_minute_one_count_all(filename="./data_ori/flight_filted6.csv")
+    # result.to_csv("./data_ori/everyday.csv")
+    # get_arrtavte_minutes_all()
 # Tst()
 
 
