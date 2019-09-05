@@ -119,36 +119,43 @@ def get_arrtavte_minutes_all(data_file="./data/everyday.csv",interval=5):
     ###           （时间间隔为10分钟==> w=7 sita=12 φ=108）
     ###                       15        w=7 sita=8  φ=72
     ###                       30        w=7 sita=4  φ=36
-def get_inputs_past_w_day_data_one(all_data,day_index,past_w_day,past_q_time,orignial_length):
+def get_inputs_past_w_day_data_one(data,target_day_index,past_w_day,past_q_time,orignial_length):
     """
-    :param data_frame:包含所有数据的DataFrame，而且是包含了目标日的过去7天的
+    :param target_day_index 目标日的取值，也就是y变量
+    :param data:包含所有数据的DataFrame，而且是包含了目标日的过去7天的
     :param past_w_day: 过去的某几天，这里数据比较少，13-28，那就只能用20-28这几天，如果选取7天的话
     :param past_q_time: 过去的q个时刻，也就是288个时间间隔的时候，选取5
     :param orignial_length:
-    :return: past_w_day_dataframe，以及taoget_frame,最后装在一个dataframe中，然后输出为两个dataframe
+    :return: result 过去w天的提取好的数据,target_day_result 目标数据的值
+    #####name = "w_%s_%d" % (past_day_index, i) #命名规则，后面会用到这个
     """
+    day_lists = sorted(list(data['hb_date'].values))  # all days
+    #last_day_index = len(day_lists)
+    # 直接指定第8天，来看过去的7天
+    target_data=data[data["hb_date"] == day_lists[target_day_index]] .values
+    target_day_result = []
+    for i in range(past_q_time,orignial_length):
+        target_day_result.append(target_data[i])
+    result = dict()
+    for past_day_index in range(target_day_index-past_w_day, target_day_index): #循环过去的7天，距离目标日的
+        data_temp = data[data["hb_date"] == day_lists[past_day_index]]  # 取出当天的data计算
+        hb_people_temp = list(data_temp["hb_people"].values)
+        for i in range(past_q_time):  # 过去的几个时刻
+            name = "w_%s_%d" % (past_day_index, i) #命名规则，后面会用到这个
+            result[name] = []
+            # 从第0个开始计算，0就是0-267 也就是 i->orignial_length-past_q_time-1+i 长度均为orignial_length-past_q_time
+            for j in range(i, orignial_length - past_q_time + i):
+                (result[name]).append(hb_people_temp[j])
+    #pd.DataFrame(result).to_csv("./data/past_w.csv")
+    return result,target_day_result
 
-    pass
-data= pd.read_csv("./data/everyday_interval_5.csv")
-day_lists= sorted(list(data['hb_date'].values)) #all days
-last_day_index=len(day_lists)
-#直接指定第8天，来看过去的7天
-target_day_index=7
-past_q_time=20
-orignial_length=288
-result=dict()
-for past_day_index in range(0,target_day_index):
-    data_temp=data[data["hb_date"]==day_lists[past_day_index]] #取出当天的data计算
-    hb_people_temp=list(data_temp["hb_people"].values)
-    for i in range(past_q_time):#过去的几个时刻
-       name="w_%s_%d"%(past_day_index,i)
-       result[name]=[]
-       #从第0个开始计算，0就是0-267 也就是 i->orignial_length-past_q_time-1+i 长度均为orignial_length-past_q_time
-       for j in range(i,orignial_length-past_q_time+i):
-           (result[name]).append(hb_people_temp[j])
-pd.DataFrame(result).to_csv("./data/past_w.csv")
+data = pd.read_csv("./data/everyday_interval_5.csv")
+target_day_index = 7  # 后面还要再做这个目标天的一个循环
+past_q_time = 20
+orignial_length = 288
+past_w_day=7
 
-
+data_x1,data_y=get_inputs_past_w_day_data_one(data,7,past_w_day,past_q_time,orignial_length) #得到某天的
 
 
 def get_inputs_past_w_day_data_all(data_file,past_w_day,past_q_time,orignial_length):
