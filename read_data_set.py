@@ -30,7 +30,9 @@ for day in range(1,8):
     print(target_lists)
     past_Day_temp=np.array(data_x1[target_lists].values)
     flow_att_features.append(past_Day_temp)
-target_y=data_y[]
+target_y=np.array(data_y["0"].values)
+target_y=target_y.reshape(1,len(target_y))
+print(target_y)
 ##目前只有8天的数据，前面7天训练，预测第8天
 # model=AM_MODEL.models().stdn(att_lstm_day=7, att_lstm_seq_sita=20, lstm_num_fai=266)
 # AM_MODEL.keras.utils.plot_model(model, 'model_info_V2.png', show_shapes=True)
