@@ -57,7 +57,7 @@ for day in range(1,8):
 target_y=data_y["0"].as_matrix().reshape(8,268)
 
 ##测试数据
-test_x1=[flow_att_features[i][7] for i in range(7)]
+test_x1=[[flow_att_features[i][7]] for i in range(7)]
 test_x2=generator_features[7]
 true_y=target_y[7]
 # target_y=target_y.reshape(1,len(target_y))
@@ -66,9 +66,9 @@ true_y=target_y[7]
 model=AM_MODEL.models().stdn(att_lstm_day=7, att_lstm_seq_sita=20, lstm_num_fai=268)
 # AM_MODEL.keras.utils.plot_model(model, 'model_info_V2.png', show_shapes=True)
 model.summary()
-model.fit(x=flow_att_features+[generator_features,],y=target_y,batch_size=77,epochs=5)
+model.fit(x=flow_att_features+[generator_features,],y=target_y,batch_size=77,epochs=1)
 
-y_pred = model.predict(x=test_x1+[test_x2,],batch_size=77,epochs=5)
+y_pred = model.predict(x=test_x1+[test_x2,],batch_size=77)
 
 plot_result(true_y,y_pred)
 
