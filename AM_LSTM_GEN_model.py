@@ -1,7 +1,7 @@
 #-*-coding:utf8-*-
 #user:brian
 #created_at:2019/8/9 17:13
-# file: AM-LSTM-GEN_model.py
+# file: AM_LSTM_GEN_model.py
 #location: china chengdu 610000
 ####公式部分已经梳理完毕，下周之内完成文献综述和引言部分8.12-19
 ####下下周8.20-27完成实验部分
@@ -153,11 +153,11 @@ class models:
     ###                       15        w=7 sita=8  φ=72
     ###                       30        w=7 sita=4  φ=36
 
-    def stdn(self, att_lstm_day, att_lstm_seq_sita, lstm_num_fai, lstm_out_size=216,output_shape=216,optimizer = 'adagrad', loss = 'mse', metrics=[]):
+    def stdn(self, att_lstm_day, att_lstm_seq_sita, lstm_num_fai, lstm_out_size=268,output_shape=268,optimizer = 'adagrad', loss = 'mse', metrics=["accuracy"]):
         """
         :param att_lstm_day: 一共过去XXX天的数据
-        :param att_lstm_seq_sita: 吸引力力序列的长度 这里就是sita的值
-        :param lstm_num_fai: 每一天的数据的长度
+        :param att_lstm_seq_sita: 吸引力力序列的长度 这里就是sita的值 20
+        :param lstm_num_fai: 每一天的数据的长度   268
         :param optimizer:
         :param loss:
         :param metrics:
@@ -165,9 +165,7 @@ class models:
         """
 
         ##第一个输入为吸引力 inputs
-
         att_lstm_inputs = [Input(shape = (att_lstm_seq_sita, lstm_num_fai,), name = "att_lstm_input_{0}".format(att+1)) for att in range(att_lstm_day)]
-
         lstm_inputs = Input(shape = (1,lstm_num_fai), name = "generator_data")
 
         #对产生数据进行一个lstm
@@ -201,9 +199,10 @@ class models:
         model.compile(optimizer = optimizer, loss = loss, metrics=metrics)
         return model
 
-x=models().stdn(att_lstm_day=7, att_lstm_seq_sita=20, lstm_num_fai=216)
-keras.utils.plot_model(x, 'model_info_V2.png', show_shapes=True)
-print(x.summary())
+if __name__ == '__main__':
+    x = models().stdn(att_lstm_day=7, att_lstm_seq_sita=20, lstm_num_fai=266)
+    keras.utils.plot_model(x, 'model_info_V2.png', show_shapes=True)
+    print(x.summary())
 # nbhd_inputs = [Input(shape = (3, 3, 2,), name = "nbhd_volume_input_time_{0}".format(ts+1)) for ts in range(20)]
 # flatten_att_nbhd_inputs = [
 #     Input(shape=(3, 3, 2,), name="att_nbhd_volume_input_time_{0}_{1}".format(att + 1, ts + 1))
