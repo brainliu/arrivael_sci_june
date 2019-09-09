@@ -165,8 +165,8 @@ class models:
         """
 
         ##第一个输入为吸引力 inputs
-        att_lstm_inputs = [Input(shape = (att_lstm_seq_sita, lstm_num_fai,), name = "att_lstm_input_{0}".format(att+1)) for att in range(att_lstm_day)]
-        lstm_inputs = Input(shape = (1,lstm_num_fai), name = "generator_data")
+        att_lstm_inputs = [Input(shape = ( lstm_num_fai,att_lstm_seq_sita,), name = "att_lstm_input_{0}".format(att+1)) for att in range(att_lstm_day)]
+        lstm_inputs = Input(shape = (lstm_num_fai,1), name = "generator_data")
 
         #对产生数据进行一个lstm
         lstm = LSTM(units=lstm_out_size, return_sequences=False, dropout=0.1, recurrent_dropout=0.1)(lstm_inputs)
@@ -184,7 +184,7 @@ class models:
 
         att_low_level=Concatenate(axis=-1)(att_low_level)
         ##然后再把这些值连接在一起，维度得到了增加
-        att_low_level=Reshape(target_shape=(att_lstm_day, lstm_out_size))(att_low_level)
+        att_low_level=Reshape(target_shape=( lstm_out_size,att_lstm_day))(att_low_level)
         ######最后再进行了一次lstm，相当于把7填的汇总到一起，进行了一个大的lstm
         att_high_level = LSTM(units=lstm_out_size, return_sequences=False, dropout=0.1, recurrent_dropout=0.1)(att_low_level)
 
@@ -208,3 +208,7 @@ class models:
 # print(1)
 # model.fit(x=att_cnnx + att_flow + att_x + cnnx + flow + [x, ],
 #           y=y,atch_size=128, , epochs=max_epochs, callbacks=[EarlyStopping()])
+if __name__ == '__main__':
+    model = models().stdn(att_lstm_day=7, att_lstm_seq_sita=20, lstm_num_fai=268)
+    keras.utils.plot_model(model, 'model_info_V33.png', show_shapes=True)
+    model.summary()

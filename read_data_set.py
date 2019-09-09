@@ -8,10 +8,21 @@
 ##主要用3个数
 import AM_LSTM_GEN_model as AM_MODEL
 import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
 data_x1=pd.read_csv("./data/6_dataset_x1.csv")
 data_x2=pd.read_csv("./data/6_dataset_x2.csv")
 data_y=pd.read_csv("./data/6_dataset_y1.csv")
+
+
+def plot_result(data_ori,data_pred):
+    y = range(0,268)
+    plt.plot(y, data_ori, ls='dashed',
+             lw=2, c='r', label='true_y')
+    plt.plot(data_pred, ls='dashed',
+             lw=2, c='b', label='data_pred')
+    plt.savefig("test2.png")
+    plt.show()
 
 # att_lstm_inputs = [Input(shape=(att_lstm_seq_sita, lstm_num_fai,), name="att_lstm_input_{0}".format(att + 1)) for att in
 #                    range(att_lstm_day)]
@@ -21,24 +32,45 @@ data_y=pd.read_csv("./data/6_dataset_y1.csv")
 # w_1 0 ===w_1 20  为一天的 20个  一共过去7天
 #用np.array() 来实现输入
 flow_att_features=[]
-generator_features=np.array(data_x2["hb_people"].values).reshape(8,1,268)
+generator_features=np.array(data_x2["hb_people"].values) #.reshape(8,1,268)##这里不能用简单的Reshape
+temp_gen=[]
+for i in range(8):
+    temp_day =[]
+    for j in range(268):
+        temp_day.append([generator_features[i*268+j]])
+    temp_gen.append(temp_day)
+
+generator_features=np.array(temp_gen) #生成结果shanpe= 8,268,1
+
 for day in range(1,8):
     target_lists=[]##每一天数据对应的索引lists
     for past_time in range(20):
         name="w_%d%2d"%(day,past_time)
         target_lists.append(name)
     print(target_lists)
-    past_Day_temp=np.array(data_x1[target_lists].values).reshape(8,20,268) ##这里读取数据有点问题
+    past_Day_temp=data_x1[target_lists]
+    past_Day_temp=past_Day_temp.as_matrix().reshape(8, 268, 20)#.reshape(8,20,268) ##这里读取数据有点问题
+    ##this is 8 day  20 col and 268 lines
     flow_att_features.append(past_Day_temp)
-target_y=np.array(data_y["0"].values).reshape(8,268)
+
+
+target_y=data_y["0"].as_matrix().reshape(8,268)
+
+##测试数据
+test_x1=[flow_att_features[i][7] for i in range(7)]
+test_x2=generator_features[7]
+true_y=target_y[7]
 # target_y=target_y.reshape(1,len(target_y))
 # print(target_y)
 ##目前只有8天的数据，前面7天训练，预测第8天
 model=AM_MODEL.models().stdn(att_lstm_day=7, att_lstm_seq_sita=20, lstm_num_fai=268)
 # AM_MODEL.keras.utils.plot_model(model, 'model_info_V2.png', show_shapes=True)
 model.summary()
-model.fit(x=flow_att_features+[generator_features,],y=target_y,batch_size=268,epochs=100)
-# y_pred = model.predict(x=flow_att_features[0]+[generator_features[0],],batch_size=64)
+model.fit(x=flow_att_features+[generator_features,],y=target_y,batch_size=77,epochs=5)
+
+y_pred = model.predict(x=test_x1+[test_x2,],batch_size=77,epochs=5)
+
+plot_result(true_y,y_pred)
 
 ###输入有两个，一个是past_w_day 个 lstm  一个是 generator生成的
 #inputs =  att_lstm_inputs  + [lstm_inputs,]

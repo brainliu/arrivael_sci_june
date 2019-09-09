@@ -263,26 +263,27 @@ def get_arrtavte_minutes_one_hb(hb_people,interval,day_index,past_q_time):
 
 ##5.3得到数据的所有航班的总人数，并均分到每时刻
 def get_all_day_possion_flight_people():
+    target_Day = 7
+    past_q_time = 20
+    data = pd.read_csv("./data/6_hb_flight.csv")
+    days_list = sorted(list(set(data["hb_date"].values)))
+    hb_flight_Data = data[data["hb_date"] == days_list[target_Day]]  # 这里选择第七天开始计算
+    data_x2 = multi_flight(list(hb_flight_Data["hb_time"].values), list(hb_flight_Data["hb_people"].values))
+    ###转化为时间间隔5分钟
+    data_x2 = get_arrtavte_minutes_one_hb(data_x2, 5, days_list[target_Day], past_q_time)
+    ##德奥所有天的
+    for hb_date_index in range(target_Day + 1, len(days_list)):
+        hb_flight_Data_temp = data[data["hb_date"] == days_list[hb_date_index]]  # 这里选择第七天开始计算
+        data_x2_temp = multi_flight(list(hb_flight_Data_temp["hb_time"].values),
+                                    list(hb_flight_Data_temp["hb_people"].values))
+        ##聚合成5分钟,并去除前面20个
+        data_x2_temp = get_arrtavte_minutes_one_hb(data_x2_temp, 5, days_list[hb_date_index], past_q_time)
+        data_x2 = data_x2.append(data_x2_temp)
 
-    pass
+    data_x2.to_csv("./data/6_dataset_x2.csv")
 
-target_Day=7
-past_q_time=20
-data=pd.read_csv("./data/6_hb_flight.csv")
-days_list=sorted(list(set(data["hb_date"].values)))
-hb_flight_Data=data[data["hb_date"]==days_list[target_Day]] #这里选择第七天开始计算
-data_x2=multi_flight(list(hb_flight_Data["hb_time"].values),list(hb_flight_Data["hb_people"].values))
-###转化为时间间隔5分钟
-data_x2=get_arrtavte_minutes_one_hb(data_x2,5,days_list[target_Day],past_q_time)
-##德奥所有天的
-for hb_date_index in range(target_Day+1,len(days_list)):
-    hb_flight_Data_temp = data[data["hb_date"] == days_list[hb_date_index]]  # 这里选择第七天开始计算
-    data_x2_temp=multi_flight(list(hb_flight_Data_temp["hb_time"].values),list(hb_flight_Data_temp["hb_people"].values))
-    ##聚合成5分钟,并去除前面20个
-    data_x2_temp=get_arrtavte_minutes_one_hb(data_x2_temp,5,days_list[hb_date_index],past_q_time)
-    data_x2=data_x2.append(data_x2_temp)
 
-data_x2.to_csv("./data/6_dataset_x2.csv")
+
 
 #######6.画图对比函数#######################################################################
 def plot(data,name):
@@ -303,13 +304,16 @@ def Tst():
     hb_time_all = sorted(list(hb_schedule_all["SCHETIME"]))  ##拍好序的所有航班时间的数据
 
     get_all_hb_time_people(hb_time_all,"./data_ori/flight_filted6.csv")
+    get_all_day_possion_flight_people()
+    get_inputs_past_w_day_data_all()
     # test_peoples=possion_generator(400,500)
     # print(test_peoples)
     # plot(test_peoples,"500ren")
     # result = get_minute_one_count_all(filename="./data_ori/flight_filted6.csv")
     # result.to_csv("./data_ori/everyday.csv")
     # get_arrtavte_minutes_all()
-# Tst()
+
+Tst()
 
 
 
