@@ -6,7 +6,8 @@
 ##从处理好的数据中读取模型的训练数据和测试数据
 ##前面的处理程序以月份为单位进程处理结果
 ##主要用3个数
-import AM_LSTM_GEN_model as AM_MODEL
+# import AM_LSTM_GEN_model as AM_MODEL
+import numpy as np
 import pandas as pd
 data_x1=pd.read_csv("./data/6_dataset_x1.csv")
 data_x2=pd.read_csv("./data/6_dataset_x2.csv")
@@ -20,14 +21,16 @@ data_y=pd.read_csv("./data/6_dataset_y1.csv")
 # w_1 0 ===w_1 20  为一天的 20个  一共过去7天
 #用np.array() 来实现输入
 flow_att_features=[]
-generator_features=[]
+generator_features=np.array(data_x2["hb_people"].values)
 for day in range(1,8):
     target_lists=[]##每一天数据对应的索引lists
     for past_time in range(20):
         name="w_%d%2d"%(day,past_time)
         target_lists.append(name)
     print(target_lists)
-
+    past_Day_temp=np.array(data_x1[target_lists].values)
+    flow_att_features.append(past_Day_temp)
+target_y=data_y[]
 ##目前只有8天的数据，前面7天训练，预测第8天
 # model=AM_MODEL.models().stdn(att_lstm_day=7, att_lstm_seq_sita=20, lstm_num_fai=266)
 # AM_MODEL.keras.utils.plot_model(model, 'model_info_V2.png', show_shapes=True)
