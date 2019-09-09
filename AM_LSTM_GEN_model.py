@@ -199,10 +199,7 @@ class models:
         model.compile(optimizer = optimizer, loss = loss, metrics=metrics)
         return model
 
-if __name__ == '__main__':
-    x = models().stdn(att_lstm_day=7, att_lstm_seq_sita=20, lstm_num_fai=266)
-    keras.utils.plot_model(x, 'model_info_V2.png', show_shapes=True)
-    print(x.summary())
+
 # nbhd_inputs = [Input(shape = (3, 3, 2,), name = "nbhd_volume_input_time_{0}".format(ts+1)) for ts in range(20)]
 # flatten_att_nbhd_inputs = [
 #     Input(shape=(3, 3, 2,), name="att_nbhd_volume_input_time_{0}_{1}".format(att + 1, ts + 1))
