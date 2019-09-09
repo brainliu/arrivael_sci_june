@@ -18,8 +18,15 @@ data_y=pd.read_csv("./data/6_dataset_y1.csv")
 #多个input 但是shape都是一样的
 # name = "w_%d%2d" % (target_day_index-past_day_index, i) #命名规则，后面会用到这个
 # w_1 0 ===w_1 20  为一天的 20个  一共过去7天
-for day in range(7):
-    pass
+#用np.array() 来实现输入
+flow_att_features=[]
+generator_features=[]
+for day in range(1,8):
+    target_lists=[]##每一天数据对应的索引lists
+    for past_time in range(20):
+        name="w_%d%2d"%(day,past_time)
+        target_lists.append(name)
+    print(target_lists)
 
 ##目前只有8天的数据，前面7天训练，预测第8天
 # model=AM_MODEL.models().stdn(att_lstm_day=7, att_lstm_seq_sita=20, lstm_num_fai=266)
